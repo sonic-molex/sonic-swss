@@ -32,6 +32,8 @@ extern "C" {
 
 #include "otnhelper.h"
 #include "otnorchdaemon.h"
+#include "otnhelper.h"
+#include "otnorchdaemon.h"
 
 using namespace std;
 using namespace swss;
@@ -797,7 +799,7 @@ int main(int argc, char **argv)
     if(gMySwitchType == SWITCH_TYPE_OTN)
     {
         orchDaemon = make_shared<OtnOrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), zmq_server.get());
-    }
+    }    
     else if (gMySwitchType != "fabric")
     {
         orchDaemon = make_shared<OrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), zmq_server.get());

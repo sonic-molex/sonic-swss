@@ -3,6 +3,7 @@
 #include "oaorch.h"
 #include "ocmorch.h"
 #include "oscorch.h"
+#include "otdrorch.h"
 
 OtnOrchDaemon::OtnOrchDaemon(DBConnector *applDb, DBConnector *configDb, DBConnector *stateDb, DBConnector *chassisAppDb, ZmqServer *zmqServer) :
     OrchDaemon(applDb, configDb, stateDb, chassisAppDb, zmqServer),
@@ -52,6 +53,13 @@ bool OtnOrchDaemon::init()
     };
     OscOrch *oscOrch = new OscOrch(m_applDb, osc_tables);
     addOrchList(oscOrch);
+
+    /* OTDR */
+    //const std::vector<std::string> otdr_tables = {
+    //    APP_OTDR_TABLE_NAME
+    //};
+    //OtdrOrch *otdrOrch = new OtdrOrch(m_applDb, otdr_tables);
+    //addOrchList(otdrOrch);
 
     /* Flex counter */
     std::vector<std::string> flex_counter_tables = {
