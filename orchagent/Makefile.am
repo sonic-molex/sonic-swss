@@ -6,7 +6,8 @@ INCLUDES = -I $(top_srcdir)/lib \
            -I debug_counter \
            -I port \
            -I pbh \
-           -I nhg
+           -I nhg \
+           -I otn
 
 SUBDIRS = p4orch/tests
 

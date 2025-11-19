@@ -34,6 +34,9 @@ extern "C" {
 #include "gearboxutils.h"
 #include "macsecpost.h"
 
+#include "otnhelper.h"
+#include "otnorchdaemon.h"
+
 using namespace std;
 using namespace swss;
 
@@ -201,7 +204,7 @@ void getCfgSwitchType(DBConnector *cfgDb, string &switch_type, string &switch_su
         switch_type = "switch";
     }
 
-    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu")
+    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu" && switch_type != SWITCH_TYPE_OTN)
     {
         SWSS_LOG_ERROR("Invalid switch type %s configured", switch_type.c_str());
     	//If configured switch type is none of the supported, assume regular switch
@@ -583,6 +586,33 @@ int main(int argc, char **argv)
 
     // Get switch_type
     getCfgSwitchType(&config_db, gMySwitchType, gMySwitchSubType);
+
+    /* Initialize sairedis */
+    if (gMySwitchType == SWITCH_TYPE_OTN) {
+        SWSS_LOG_NOTICE("OTN platform detected, initializing OTN API");
+        initOtnApi();
+    } else {
+        initSaiApi();
+    }
+
+    initSaiRedis();
+    initFlexCounterTables();
+
+    /* Initialize remaining recorder parameters  */
+    Recorder::Instance().swss.setRecord(
+        (record_type & SWSS_RECORD_ENABLE) == SWSS_RECORD_ENABLE
+    );
+    Recorder::Instance().swss.setLocation(record_location);
+    Recorder::Instance().swss.setFileName(swss_rec_filename);
+    Recorder::Instance().swss.startRec(true);
+
+    Recorder::Instance().respub.setRecord(
+        (record_type & RESPONSE_PUBLISHER_RECORD_ENABLE) ==
+        RESPONSE_PUBLISHER_RECORD_ENABLE
+    );
+    Recorder::Instance().respub.setLocation(record_location);
+    Recorder::Instance().respub.setFileName(responsepublisher_rec_filename);
+    Recorder::Instance().respub.startRec(false);
 
     sai_attribute_t attr;
     vector<sai_attribute_t> attrs;

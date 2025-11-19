@@ -448,7 +448,7 @@ void initSaiRedis()
     }
     SWSS_LOG_NOTICE("Notify syncd INIT_VIEW");
 
-    if (platform && (strstr(platform, MLNX_PLATFORM_SUBSTRING) || strstr(platform, XS_PLATFORM_SUBSTRING)))
+    if (platform && (strstr(platform, MLNX_PLATFORM_SUBSTRING) || strstr(platform, XS_PLATFORM_SUBSTRING) || strstr(platform, OTN_PLATFORM_SUBSTRING)))
     {
         /* Set timeout back to the default value */
         attr.id = SAI_REDIS_SWITCH_ATTR_SYNC_OPERATION_RESPONSE_TIMEOUT;
