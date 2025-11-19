@@ -6,7 +6,8 @@ INCLUDES = -I $(top_srcdir)/lib \
            -I debug_counter \
            -I port \
            -I pbh \
-           -I nhg
+           -I nhg \
+           -I otn
 
 SUBDIRS = p4orch/tests
 
@@ -114,7 +115,15 @@ orchagent_SOURCES = \
             dash/dashaclgroupmgr.cpp \
             dash/dashtagmgr.cpp \
             dash/pbutils.cpp \
-            twamporch.cpp
+            twamporch.cpp \
+            otn/orchfsm.cpp \
+            otn/otnhelper.cpp \
+            otn/objectorch.cpp \
+            otn/attenuatororch.cpp \
+            otn/oaorch.cpp \
+            otn/ocmorch.cpp \
+            otn/oscorch.cpp \
+            otn/otnorchdaemon.cpp
 
 orchagent_SOURCES += flex_counter/flex_counter_manager.cpp flex_counter/flex_counter_stat_manager.cpp flex_counter/flow_counter_handler.cpp flex_counter/flowcounterrouteorch.cpp
 orchagent_SOURCES += debug_counter/debug_counter.cpp debug_counter/drop_counter.cpp

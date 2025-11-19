@@ -30,6 +30,9 @@ extern "C" {
 #include "warm_restart.h"
 #include "gearboxutils.h"
 
+#include "otnhelper.h"
+#include "otnorchdaemon.h"
+
 using namespace std;
 using namespace swss;
 
@@ -178,7 +181,7 @@ void getCfgSwitchType(DBConnector *cfgDb, string &switch_type)
         switch_type = "switch";
     }
 
-    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu")
+    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu" && switch_type != SWITCH_TYPE_OTN)
     {
         SWSS_LOG_ERROR("Invalid switch type %s configured", switch_type.c_str());
     	//If configured switch type is none of the supported, assume regular switch
@@ -464,27 +467,6 @@ int main(int argc, char **argv)
     Recorder::Instance().sairedis.setLocation(record_location);
     Recorder::Instance().sairedis.setFileName(sairedis_rec_filename);
 
-    /* Initialize sairedis */
-    initSaiApi();
-    initSaiRedis();
-    initFlexCounterTables();
-
-    /* Initialize remaining recorder parameters  */
-    Recorder::Instance().swss.setRecord(
-        (record_type & SWSS_RECORD_ENABLE) == SWSS_RECORD_ENABLE
-    );
-    Recorder::Instance().swss.setLocation(record_location);
-    Recorder::Instance().swss.setFileName(swss_rec_filename);
-    Recorder::Instance().swss.startRec(true);
-
-    Recorder::Instance().respub.setRecord(
-        (record_type & RESPONSE_PUBLISHER_RECORD_ENABLE) ==
-        RESPONSE_PUBLISHER_RECORD_ENABLE
-    );
-    Recorder::Instance().respub.setLocation(record_location);
-    Recorder::Instance().respub.setFileName(responsepublisher_rec_filename);
-    Recorder::Instance().respub.startRec(false);
-
     // Instantiate database connectors
     DBConnector appl_db("APPL_DB", 0);
     DBConnector config_db("CONFIG_DB", 0);
@@ -504,6 +486,33 @@ int main(int argc, char **argv)
 
     // Get switch_type
     getCfgSwitchType(&config_db, gMySwitchType);
+
+    /* Initialize sairedis */
+    if (gMySwitchType == SWITCH_TYPE_OTN) {
+        SWSS_LOG_NOTICE("OTN platform detected, initializing OTN API");
+        initOtnApi();
+    } else {
+        initSaiApi();
+    }
+
+    initSaiRedis();
+    initFlexCounterTables();
+
+    /* Initialize remaining recorder parameters  */
+    Recorder::Instance().swss.setRecord(
+        (record_type & SWSS_RECORD_ENABLE) == SWSS_RECORD_ENABLE
+    );
+    Recorder::Instance().swss.setLocation(record_location);
+    Recorder::Instance().swss.setFileName(swss_rec_filename);
+    Recorder::Instance().swss.startRec(true);
+
+    Recorder::Instance().respub.setRecord(
+        (record_type & RESPONSE_PUBLISHER_RECORD_ENABLE) ==
+        RESPONSE_PUBLISHER_RECORD_ENABLE
+    );
+    Recorder::Instance().respub.setLocation(record_location);
+    Recorder::Instance().respub.setFileName(responsepublisher_rec_filename);
+    Recorder::Instance().respub.startRec(false);
 
     sai_attribute_t attr;
     vector<sai_attribute_t> attrs;
@@ -785,7 +794,11 @@ int main(int argc, char **argv)
     }
 
     shared_ptr<OrchDaemon> orchDaemon;
-    if (gMySwitchType != "fabric")
+    if(gMySwitchType == SWITCH_TYPE_OTN)
+    {
+        orchDaemon = make_shared<OtnOrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), zmq_server.get());
+    }
+    else if (gMySwitchType != "fabric")
     {
         orchDaemon = make_shared<OrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), zmq_server.get());
         if (gMySwitchType == "voq")

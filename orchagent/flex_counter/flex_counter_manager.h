@@ -32,8 +32,14 @@ enum class CounterType
     TUNNEL,
     HOSTIF_TRAP,
     ROUTE,
-    ENI
+    ENI,
+    OTN_ATTENUATOR_ATTR,
+    OTN_OA_ATTR,
+    OTN_OCM_ATTR,
+    OTN_OCM_CHANNEL_ATTR,
+    OTN_OSC_ATTR,
 };
+
 
 // FlexCounterManager allows users to manage a group of flex counters.
 //
