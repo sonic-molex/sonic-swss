@@ -49,6 +49,8 @@ enum class CounterType
     OTN_OA_ATTR,
     OTN_OCM_ATTR,
     OTN_OCM_CHANNEL_ATTR,
+    OTN_WSS_ATTR,
+    OTN_WSS_SPEC_POWER_ATTR,
     OTN_OSC_ATTR,
 };
 

@@ -59,6 +59,8 @@ const unordered_map<CounterType, string> FlexCounterManager::counter_id_field_lo
     { CounterType::OTN_OA_ATTR,         OTN_OA_ATTR_ID_LIST },
     { CounterType::OTN_OCM_ATTR,       OTN_OCM_ATTR_ID_LIST },
     { CounterType::OTN_OCM_CHANNEL_ATTR, OTN_OCM_CHANNEL_ATTR_ID_LIST },
+    { CounterType::OTN_WSS_ATTR,          OTN_WSS_ATTR_ID_LIST },
+    { CounterType::OTN_WSS_SPEC_POWER_ATTR, OTN_WSS_SPEC_POWER_ATTR_ID_LIST },
     { CounterType::OTN_OSC_ATTR,       OTN_OSC_ATTR_ID_LIST },
 };
 

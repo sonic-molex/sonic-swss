@@ -2,6 +2,7 @@
 #include "attenuatororch.h"
 #include "oaorch.h"
 #include "ocmorch.h"
+#include "wssorch.h"
 #include "oscorch.h"
 
 OtnOrchDaemon::OtnOrchDaemon(DBConnector *applDb, DBConnector *configDb, DBConnector *stateDb, DBConnector *chassisAppDb, ZmqServer *zmqServer) :
@@ -45,6 +46,20 @@ bool OtnOrchDaemon::init()
     };
     OcmChannelOrch *ocmChannelOrch = new OcmChannelOrch(m_applDb, ocm_channel_tables);
     addOrchList(ocmChannelOrch);
+
+    /* WSS */
+    const std::vector<std::string> wss_tables = {
+        APP_OTN_WSS_TABLE_NAME
+    };
+    WssOrch *wssOrch = new WssOrch(m_applDb, wss_tables);
+    addOrchList(wssOrch);
+
+    /* WSS Spec Power */
+    const std::vector<std::string> wss_spec_power_tables = {
+        APP_OTN_WSS_SPEC_POWER_TABLE_NAME
+    };
+    WssSpecPowerOrch *wssSpecPowerOrch = new WssSpecPowerOrch(m_applDb, wss_spec_power_tables);
+    addOrchList(wssSpecPowerOrch);
 
     /* OSC */
     const std::vector<std::string> osc_tables = {

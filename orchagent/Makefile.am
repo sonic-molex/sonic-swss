@@ -89,6 +89,7 @@ orchagent_SOURCES = \
             otn/attenuatororch.cpp \
             otn/oaorch.cpp \
             otn/ocmorch.cpp \
+            otn/wssorch.cpp \
             otn/oscorch.cpp \
             otn/otnorchdaemon.cpp \
             saiattr.cpp \
