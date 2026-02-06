@@ -67,6 +67,8 @@ public:
     bool removeObject(const std::string &key);
 
     virtual void addExtraAttrsOnCreate(const std::string &key, std::vector<sai_attribute_t> &attrs) {};
+    virtual bool addNameOnCreate() const { return true; }
+
 
     bool setObjectAttrs(const std::string &key,
                             std::map<std::string, std::string> &field_values,

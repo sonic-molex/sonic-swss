@@ -54,7 +54,7 @@ bool OtnOrchDaemon::init()
     WssOrch *wssOrch = new WssOrch(m_applDb, wss_tables);
     addOrchList(wssOrch);
 
-    /* WSS Spec Power */
+    /* WSS Spec Power: config has source_port_name, lower-frequency, upper-frequency, attenuation */
     const std::vector<std::string> wss_spec_power_tables = {
         APP_OTN_WSS_SPEC_POWER_TABLE_NAME
     };

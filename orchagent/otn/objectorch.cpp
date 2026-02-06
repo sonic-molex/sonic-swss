@@ -574,8 +574,11 @@ void ObjectOrch::doTask(Consumer &consumer)
                 }
             }
 
-            // Add attribute name
-            createonly_attrs["name"] = key;
+            if (addNameOnCreate())
+            {
+                // Add attribute name
+                createonly_attrs["name"] = key;
+            }
 
             if (m_keys.find(key) == m_keys.end())
             {
