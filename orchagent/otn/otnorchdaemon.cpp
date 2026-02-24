@@ -1,4 +1,5 @@
 #include "otnorchdaemon.h"
+#include "otndeviceorch.h"
 #include "attenuatororch.h"
 #include "oaorch.h"
 #include "ocmorch.h"
@@ -18,6 +19,13 @@ bool OtnOrchDaemon::init()
 {
     SWSS_LOG_ENTER();
     SWSS_LOG_NOTICE("OtnOrchDaemon init");
+
+    /* Otn Device */
+    const std::vector<std::string> otn_device_tables = {
+        APP_OTN_DEVICE_TABLE_NAME
+    };
+    OtnDeviceOrch *otnDeviceOrch = new OtnDeviceOrch(m_applDb, otn_device_tables);
+    addOrchList(otnDeviceOrch);
 
     /* attenuator */
     const std::vector<std::string> attenuator_tables = {

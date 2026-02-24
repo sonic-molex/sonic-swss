@@ -90,6 +90,7 @@ orchagent_SOURCES = \
             otn/oaorch.cpp \
             otn/ocmorch.cpp \
             otn/wssorch.cpp \
+            otn/otndeviceorch.cpp \
             otn/oscorch.cpp \
             otn/otnorchdaemon.cpp \
             saiattr.cpp \

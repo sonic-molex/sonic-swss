@@ -75,7 +75,7 @@ void OtnMgr::doTask(Consumer &consumer)
     }
 }
 
-bool OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::string &field, const std::string &value)
+void OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::string &field, const std::string &value)
 {
     SWSS_LOG_ENTER();
 
@@ -83,14 +83,11 @@ bool OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, cons
     FieldValueTuple fv(field, value);
     fvs.push_back(fv);
     table->set(alias, fvs);
-
-    return true;
 }
 
-bool OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, std::vector<FieldValueTuple> &field_values)
+void OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, std::vector<FieldValueTuple> &field_values)
 {
     SWSS_LOG_ENTER();
 
     table->set(alias, field_values);
-    return true;
 }

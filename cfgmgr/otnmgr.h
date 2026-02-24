@@ -23,8 +23,8 @@ private:
     std::map<std::string, std::shared_ptr<ProducerStateTable>> m_appTables;
 
     void doTask(Consumer &consumer);
-    bool writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::string &field, const std::string &value);
-    bool writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, std::vector<FieldValueTuple> &field_values);
+    void writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::string &field, const std::string &value);
+    void writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, std::vector<FieldValueTuple> &field_values);
 };
 
 }

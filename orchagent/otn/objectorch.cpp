@@ -129,6 +129,18 @@ void ObjectOrch::localDataInit(DBConnector *db)
     SWSS_LOG_DEBUG("localDataInit, exit");
 }
 
+ObjectOrch::ObjectOrch(DBConnector *db, const std::vector<std::string> &table_names, sai_object_type_t obj_type) :
+    Orch(db, table_names),
+    m_objectType(obj_type),
+    m_notificationConsumer(nullptr),
+    m_notificationProducer(nullptr),
+    m_flex_stat_manager(nullptr)
+{
+    SWSS_LOG_ENTER();
+
+    localDataInit(db);
+}
+
 ObjectOrch::ObjectOrch(DBConnector *db,
     const std::vector<std::string>& table_names,
     sai_object_type_t obj_type,

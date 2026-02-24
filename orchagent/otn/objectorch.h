@@ -47,6 +47,10 @@ public:
 
     ObjectOrch(DBConnector *db,
                const std::vector<std::string> &table_names,
+               sai_object_type_t obj_type);
+
+    ObjectOrch(DBConnector *db,
+               const std::vector<std::string> &table_names,
                sai_object_type_t obj_type,
                CounterType flex_counter_type);
 

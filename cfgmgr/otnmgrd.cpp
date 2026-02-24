@@ -26,6 +26,7 @@ int main(int argc, char **argv)
     {
         map<string, string> cfg_maps =
         {
+            { CFG_OTN_DEVICE_TABLE_NAME, APP_OTN_DEVICE_TABLE_NAME },
             { CFG_OTN_ATTENUATOR_TABLE_NAME, APP_OTN_ATTENUATOR_TABLE_NAME },
             { CFG_OTN_OA_TABLE_NAME, APP_OTN_OA_TABLE_NAME },
             { CFG_OTN_OCM_TABLE_NAME, APP_OTN_OCM_TABLE_NAME },

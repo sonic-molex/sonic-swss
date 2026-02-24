@@ -19,6 +19,7 @@ using namespace swss;
 /* Initialize all otai api pointers */
 extern sai_switch_api_t                 *sai_switch_api;
 extern sai_router_interface_api_t       *sai_router_intfs_api;
+sai_otn_device_api_t                    sai_otn_device_api;
 sai_otn_attenuator_api_t                *sai_otn_attenuator_api;
 sai_otn_oa_api_t                        *sai_otn_oa_api;
 sai_otn_ocm_api_t                       *sai_otn_ocm_api;
@@ -50,6 +51,7 @@ void initOtnApi()
 
     sai_api_query(SAI_API_SWITCH,                               (void **)&sai_switch_api);
     sai_api_query(SAI_API_ROUTER_INTERFACE,                     (void **)&sai_router_intfs_api);
+    sai_api_query((sai_api_t)SAI_API_OTN_DEVICE,                (void **)&sai_otn_device_api);
     sai_api_query((sai_api_t)SAI_API_OTN_ATTENUATOR,            (void **)&sai_otn_attenuator_api);
     sai_api_query((sai_api_t)SAI_API_OTN_OA,                    (void **)&sai_otn_oa_api);
     sai_api_query((sai_api_t)SAI_API_OTN_OCM,                   (void **)&sai_otn_ocm_api);
@@ -58,6 +60,7 @@ void initOtnApi()
 
     sai_log_set(SAI_API_SWITCH,                                 SAI_LOG_LEVEL_NOTICE);
     sai_log_set(SAI_API_ROUTER_INTERFACE,                       SAI_LOG_LEVEL_NOTICE);
+    sai_log_set((sai_api_t)SAI_API_OTN_DEVICE,                  SAI_LOG_LEVEL_NOTICE);
     sai_log_set((sai_api_t)SAI_API_OTN_ATTENUATOR,              SAI_LOG_LEVEL_NOTICE);
     sai_log_set((sai_api_t)SAI_API_OTN_OA,                      SAI_LOG_LEVEL_NOTICE);
     sai_log_set((sai_api_t)SAI_API_OTN_OCM,                     SAI_LOG_LEVEL_NOTICE);
