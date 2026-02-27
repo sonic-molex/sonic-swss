@@ -74,38 +74,52 @@ void WssOrch::addExtraAttrsOnCreate(const std::string &key, std::vector<sai_attr
 
 void WssSpecPowerOrch::addExtraAttrsOnCreate(const std::string &key, std::vector<sai_attribute_t> &attrs)
 {
-    /* Key format: "index|lower-frequency".
+    /* Key format: "index|lower-frequency|upper-frequency".
      *
-     * lower-frequency is a key component in the sonic YANG, so CVL forbids
-     * storing it as a hash field.  It won't appear in CONFIG_DB/APP_DB when
-     * coming through gNMI, but SAI requires it as a mandatory create-only
-     * attribute.
+     * lower-frequency and upper-frequency are key components in sonic YANG,
+     * so CVL forbids storing them as hash fields. They won't appear in
+     * CONFIG_DB/APP_DB when coming through gNMI, but SAI requires them as
+     * mandatory create-only attributes.
     */
     bool hasLowerFreq = false;
+    bool hasUpperFreq = false;
     bool hasSourcePort = false;
     for (const auto &a : attrs)
     {
         if (a.id == SAI_OTN_WSS_SPEC_POWER_ATTR_LOWER_FREQUENCY)
             hasLowerFreq = true;
+        if (a.id == SAI_OTN_WSS_SPEC_POWER_ATTR_UPPER_FREQUENCY)
+            hasUpperFreq = true;
         if (a.id == SAI_OTN_WSS_SPEC_POWER_ATTR_SOURCE_PORT_NAME)
             hasSourcePort = true;
     }
 
-    // --- lower-frequency (from composite key) ---
-    if (!hasLowerFreq)
+    // --- lower-frequency and upper-frequency (from composite key) ---
+    if (!hasLowerFreq || !hasUpperFreq)
     {
-        auto sep = key.find('|');
-        if (sep != std::string::npos)
+        auto sep1 = key.find('|');
+        auto sep2 = (sep1 == std::string::npos) ? std::string::npos : key.find('|', sep1 + 1);
+        if (sep1 != std::string::npos && sep2 != std::string::npos)
         {
-            std::string lowerStr = key.substr(sep + 1);
+            std::string lowerStr = key.substr(sep1 + 1, sep2 - sep1 - 1);
+            std::string upperStr = key.substr(sep2 + 1);
             uint64_t lowerFreq = std::strtoull(lowerStr.c_str(), nullptr, 10);
+            uint64_t upperFreq = std::strtoull(upperStr.c_str(), nullptr, 10);
 
-            // SAI attribute
-            sai_attribute_t attr;
-            attr.id = SAI_OTN_WSS_SPEC_POWER_ATTR_LOWER_FREQUENCY;
-            attr.value.u64 = lowerFreq;
-            attrs.insert(attrs.begin(), attr);
-
+            if (!hasLowerFreq)
+            {
+                sai_attribute_t attr;
+                attr.id = SAI_OTN_WSS_SPEC_POWER_ATTR_LOWER_FREQUENCY;
+                attr.value.u64 = lowerFreq;
+                attrs.insert(attrs.begin(), attr);
+            }
+            if (!hasUpperFreq)
+            {
+                sai_attribute_t attr;
+                attr.id = SAI_OTN_WSS_SPEC_POWER_ATTR_UPPER_FREQUENCY;
+                attr.value.u64 = upperFreq;
+                attrs.insert(attrs.begin(), attr);
+            }
         }
     }
 
