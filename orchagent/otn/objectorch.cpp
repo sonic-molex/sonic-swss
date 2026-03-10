@@ -134,7 +134,8 @@ ObjectOrch::ObjectOrch(DBConnector *db, const std::vector<std::string> &table_na
     m_objectType(obj_type),
     m_notificationConsumer(nullptr),
     m_notificationProducer(nullptr),
-    m_flex_stat_manager(nullptr)
+    m_flex_stat_manager(nullptr),
+    m_bulkSetAttrFunc(nullptr)
 {
     SWSS_LOG_ENTER();
 
@@ -150,7 +151,8 @@ ObjectOrch::ObjectOrch(DBConnector *db,
     m_flex_counter_type(flex_counter_type),
     m_notificationConsumer(nullptr),
     m_notificationProducer(nullptr),
-    m_flex_stat_manager(nullptr)
+    m_flex_stat_manager(nullptr),
+    m_bulkSetAttrFunc(nullptr)
 {
     SWSS_LOG_ENTER();
 
@@ -166,7 +168,8 @@ ObjectOrch::ObjectOrch(DBConnector *db,
     m_flex_counter_type(flex_counter_type),
     m_notificationConsumer(nullptr),
     m_notificationProducer(nullptr),
-    m_flex_stat_manager(nullptr)
+    m_flex_stat_manager(nullptr),
+    m_bulkSetAttrFunc(nullptr)
 {
     SWSS_LOG_ENTER();
 
@@ -555,6 +558,71 @@ void ObjectOrch::doTask(Consumer &consumer)
         return;
     }
 
+    if (m_bulkSetAttrFunc != nullptr)
+    {
+        std::vector<ObjectAttrUpdate> eligible_updates;
+        eligible_updates.reserve(consumer.m_toSync.size());
+
+        auto bulk_it = consumer.m_toSync.begin();
+        while (bulk_it != consumer.m_toSync.end())
+        {
+            auto &t = bulk_it->second;
+            const std::string key = kfvKey(t);
+            const std::string op = kfvOp(t);
+            if (op != SET_COMMAND)
+            {
+                ++bulk_it;
+                continue;
+            }
+
+            if (m_key2oid.find(key) == m_key2oid.end())
+            {
+                ++bulk_it;
+                continue;
+            }
+
+            size_t settable_attr_count = 0;
+            std::string settable_field;
+            std::string settable_value;
+            for (const auto &fv : kfvFieldsValues(t))
+            {
+                const std::string name = fvField(fv);
+                if (m_createandsetAttrs.find(name) != m_createandsetAttrs.end())
+                {
+                    settable_attr_count++;
+                    if (settable_attr_count > 1)
+                    {
+                        break;
+                    }
+                    settable_field = name;
+                    settable_value = fvValue(fv);
+                }
+            }
+
+            // For updates, create-only fields may still appear in input (e.g. source-port-name).
+            // Ignore them and bulk only when exactly one settable attribute is present.
+            if (settable_attr_count != 1)
+            {
+                ++bulk_it;
+                continue;
+            }
+
+            eligible_updates.push_back({key, settable_field, settable_value});
+            bulk_it = consumer.m_toSync.erase(bulk_it);
+        }
+
+        SWSS_LOG_NOTICE("Bulk set candidate scan for %s: eligible=%zu", m_objectName.c_str(), eligible_updates.size());
+
+        if (!bulkSetObjects(eligible_updates))
+        {
+            SWSS_LOG_ERROR("Failed to bulk set attributes for %s", m_objectName.c_str());
+        }
+    }
+    else
+    {
+        SWSS_LOG_NOTICE("Bulk set disabled for %s: m_bulkSetAttrFunc is null", m_objectName.c_str());
+    }
+
     auto it = consumer.m_toSync.begin();
     while (it != consumer.m_toSync.end())
     {
@@ -634,6 +702,112 @@ void ObjectOrch::doTask(Consumer &consumer)
             it = consumer.m_toSync.erase(it);
         }
     }
+}
+
+bool ObjectOrch::bulkSetObjects(const std::vector<ObjectAttrUpdate> &updates)
+{
+    SWSS_LOG_ENTER();
+
+    if (updates.empty())
+    {
+        return true;
+    }
+
+    if (m_bulkSetAttrFunc == nullptr)
+    {
+        SWSS_LOG_WARN("Bulk set is not supported for %s", m_objectName.c_str());
+        return false;
+    }
+
+    std::vector<sai_object_id_t> obj_ids;
+    std::vector<sai_attribute_t> attrs;
+    std::vector<sai_status_t> statuses;
+    std::vector<const ObjectAttrUpdate *> valid_updates;
+    obj_ids.reserve(updates.size());
+    attrs.reserve(updates.size());
+    valid_updates.reserve(updates.size());
+
+    for (const auto &update : updates)
+    {
+        const std::string &key = update.key;
+        const std::string &field = update.field;
+        const std::string &value = update.value;
+
+        auto oid_it = m_key2oid.find(key);
+        if (oid_it == m_key2oid.end())
+        {
+            continue;
+        }
+
+        sai_attribute_t attr;
+        if (!translateObjectAttr(field, value, attr))
+        {
+            std::string channel = field + "-" + key;
+            std::string error_msg = "Failed to set " + key + " " + field + " to " + value;
+            publishOperationResult(channel, SAI_STATUS_FAILURE, error_msg);
+            continue;
+        }
+
+        obj_ids.push_back(oid_it->second);
+        attrs.push_back(attr);
+        valid_updates.push_back(&update);
+    }
+
+    if (obj_ids.empty())
+    {
+        return false;
+    }
+
+    statuses.resize(obj_ids.size(), SAI_STATUS_FAILURE);
+    sai_status_t status = m_bulkSetAttrFunc(
+        static_cast<uint32_t>(obj_ids.size()),
+        obj_ids.data(),
+        attrs.data(),
+        SAI_BULK_OP_ERROR_MODE_IGNORE_ERROR,
+        statuses.data());
+
+    if (status != SAI_STATUS_SUCCESS)
+    {
+        SWSS_LOG_WARN("Bulk set returned status=%d for %s with %zu objects",
+                      status, m_objectName.c_str(), obj_ids.size());
+    }
+    else
+    {
+        SWSS_LOG_NOTICE("Bulk set succeeded for %s with %zu objects",
+                        m_objectName.c_str(), obj_ids.size());
+    }
+
+    bool all_ok = (status == SAI_STATUS_SUCCESS);
+    for (size_t i = 0; i < valid_updates.size(); ++i)
+    {
+        const auto &update = *valid_updates[i];
+        const std::string &key = update.key;
+        const std::string &field = update.field;
+        const std::string &value = update.value;
+        const sai_status_t object_status = statuses[i];
+        const std::string channel = field + "-" + key;
+
+        if (object_status == SAI_STATUS_SUCCESS)
+        {
+            copyConfigToState(key, std::make_pair(field, value));
+            std::string msg = "Set " + key + " " + field + " to " + value;
+            publishOperationResult(channel, object_status, msg);
+        }
+        else
+        {
+            SWSS_LOG_ERROR("Failed bulk set %s|%s %s to %s, status=%d",
+                           m_objectName.c_str(),
+                           key.c_str(),
+                           field.c_str(),
+                           value.c_str(),
+                           object_status);
+            std::string msg = "Failed to set " + key + " " + field + " to " + value;
+            publishOperationResult(channel, object_status, msg);
+            all_ok = false;
+        }
+    }
+
+    return all_ok;
 }
 
 void ObjectOrch::doStateTask(Consumer &consumer)

@@ -190,5 +190,6 @@ WssSpecPowerOrch::WssSpecPowerOrch(DBConnector *db, const std::vector<std::strin
     m_removeFunc = sai_otn_wss_api->remove_otn_wss_spec_power;
     m_setFunc = sai_otn_wss_api->set_otn_wss_spec_power_attribute;
     m_getFunc = sai_otn_wss_api->get_otn_wss_spec_power_attribute;
+    m_bulkSetAttrFunc = sai_otn_wss_api->set_otn_wss_spec_powers_attribute;
 
 }

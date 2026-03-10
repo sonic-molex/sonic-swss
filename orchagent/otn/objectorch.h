@@ -32,6 +32,20 @@ typedef sai_status_t (*GetObjectAttrFunc)(
         uint32_t attr_count,
         sai_attribute_t *attr_list);
 
+typedef sai_status_t (*BulkSetObjectAttrFunc)(
+        uint32_t object_count,
+        const sai_object_id_t *object_id,
+        const sai_attribute_t *attr_list,
+        sai_bulk_op_error_mode_t mode,
+        sai_status_t *object_statuses);
+
+struct ObjectAttrUpdate
+{
+    std::string key;
+    std::string field;
+    std::string value;
+};
+
 typedef enum _ConfigState_E
 {
     CONFIG_MISSING = 0,
@@ -103,6 +117,7 @@ public:
 
     void copyConfigToState(const std::string &key, const FieldValueTuple &fv);
     void copyConfigToState(const std::string &key, std::map<std::string, std::string> &fvs);
+    bool bulkSetObjects(const std::vector<ObjectAttrUpdate> &updates);
 
 protected:
 
@@ -123,6 +138,8 @@ protected:
     SetObjectAttrFunc m_setFunc;
 
     GetObjectAttrFunc m_getFunc;
+
+    BulkSetObjectAttrFunc m_bulkSetAttrFunc = nullptr;
 
     uint32_t m_count;
 
