@@ -45,6 +45,11 @@ enum class CounterType
     DASH_METER,
     SRV6,
     SWITCH,
+    OTN_ATTENUATOR_ATTR,
+    OTN_OA_ATTR,
+    OTN_OCM_ATTR,
+    OTN_OCM_CHANNEL_ATTR,
+    OTN_OSC_ATTR,
 };
 
 extern bool gTraditionalFlexCounter;

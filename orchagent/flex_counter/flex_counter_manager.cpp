@@ -55,6 +55,11 @@ const unordered_map<CounterType, string> FlexCounterManager::counter_id_field_lo
     { CounterType::DASH_METER,          DASH_METER_COUNTER_ID_LIST },
     { CounterType::SRV6,                SRV6_COUNTER_ID_LIST },
     { CounterType::SWITCH,              SWITCH_COUNTER_ID_LIST },
+    { CounterType::OTN_ATTENUATOR_ATTR, OTN_ATTENUATOR_ATTR_ID_LIST },
+    { CounterType::OTN_OA_ATTR,         OTN_OA_ATTR_ID_LIST },
+    { CounterType::OTN_OCM_ATTR,       OTN_OCM_ATTR_ID_LIST },
+    { CounterType::OTN_OCM_CHANNEL_ATTR, OTN_OCM_CHANNEL_ATTR_ID_LIST },
+    { CounterType::OTN_OSC_ATTR,       OTN_OSC_ATTR_ID_LIST },
 };
 
 FlexManagerDirectory g_FlexManagerDirectory;

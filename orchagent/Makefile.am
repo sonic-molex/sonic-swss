@@ -84,6 +84,13 @@ orchagent_SOURCES = \
             pbh/pbhrule.cpp \
             pbhorch.cpp \
             saihelper.cpp \
+            otn/otnhelper.cpp \
+            otn/objectorch.cpp \
+            otn/attenuatororch.cpp \
+            otn/oaorch.cpp \
+            otn/ocmorch.cpp \
+            otn/oscorch.cpp \
+            otn/otnorchdaemon.cpp \
             saiattr.cpp \
             switch/switch_capabilities.cpp \
             switch/switch_helper.cpp \
