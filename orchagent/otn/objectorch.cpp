@@ -175,6 +175,15 @@ ObjectOrch::ObjectOrch(DBConnector *db,
     localDataInit(db);
 }
 
+bool ObjectOrch::handleRpcRequest(
+    const std::string &op,
+    const std::string &data,
+    const std::vector<swss::FieldValueTuple> &inputs,
+    std::vector<swss::FieldValueTuple> &reply)
+{
+    return false;
+}
+
 void ObjectOrch::doTask(NotificationConsumer& consumer)
 {
     SWSS_LOG_ENTER();
@@ -239,6 +248,18 @@ void ObjectOrch::doTask(NotificationConsumer& consumer)
          m_notificationProducer->send(op, data, values);
 
          return;
+    }
+    // Special handling for RPC requests
+    else
+    {
+        std::vector<swss::FieldValueTuple> reply;
+        if (handleRpcRequest(op, data, values, reply))
+        {
+            op = "SUCCESS";
+            m_notificationProducer->send(op, data, reply);
+            SWSS_LOG_NOTICE("RPC request %s|%s handled successfully", m_objectName.c_str(), data.c_str());
+            return;
+        }
     }
 
 error:

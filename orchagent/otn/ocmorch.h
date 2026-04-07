@@ -6,6 +6,14 @@ class OcmOrch: public ObjectOrch
 {
 public:
     OcmOrch(DBConnector *db, const std::vector<std::string> &table_names);
+
+    bool handleRpcRequest(const std::string &op,
+                          const std::string &data,
+                          const std::vector<swss::FieldValueTuple> &inputs,
+                          std::vector<swss::FieldValueTuple> &reply) override;
+
+private:
+    sai_status_t doGetOcmRaw(const std::string &data, std::vector<swss::FieldValueTuple> &values);
 };
 
 

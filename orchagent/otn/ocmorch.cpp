@@ -2,7 +2,7 @@
 #include "schema.h"
 #include <saiexperimentalotnocm.h>
 #include <cstdlib>
-
+#include <vector>
 
 extern sai_otn_ocm_api_t *sai_otn_ocm_api;
 
@@ -14,6 +14,9 @@ extern sai_otn_ocm_api_t *sai_otn_ocm_api;
 #define OTN_OCM_CHANNEL_FLEX_COUNTER_GROUP           "OTN_OCM_CHANNEL_FLEX_COUNTER"
 #define OTN_OCM_CHANNEL_DEFAULT_POLLING_INTERVAL_MS  1000 // ms
 #define OTN_OCM_CHANNEL_DEFAULT_ENABLED_STATE        true
+
+/* 4096 bytes = 2048 slots × 2 bytes; covers full C-band at 6.25 GHz resolution */
+#define OTN_OCM_RAW_DATA_BUF_SIZE                    2048
 
 OcmOrch::OcmOrch(DBConnector *db, const std::vector<std::string> &table_names) :
     ObjectOrch(db, table_names, (sai_object_type_t)SAI_OBJECT_TYPE_OTN_OCM, CounterType::OTN_OCM_ATTR)
@@ -41,7 +44,6 @@ OcmOrch::OcmOrch(DBConnector *db, const std::vector<std::string> &table_names) :
     m_removeFunc = sai_otn_ocm_api->remove_otn_ocm;
     m_setFunc = sai_otn_ocm_api->set_otn_ocm_attribute;
     m_getFunc = sai_otn_ocm_api->get_otn_ocm_attribute;
-
 }
 
 // OCM channel
@@ -70,7 +72,64 @@ OcmChannelOrch::OcmChannelOrch(DBConnector *db, const std::vector<std::string> &
     m_removeFunc = sai_otn_ocm_api->remove_otn_ocm_channel;
     m_setFunc = sai_otn_ocm_api->set_otn_ocm_channel_attribute;
     m_getFunc = sai_otn_ocm_api->get_otn_ocm_channel_attribute;
+}
 
+sai_status_t OcmOrch::doGetOcmRaw(const std::string &data, std::vector<swss::FieldValueTuple> &values)
+{
+    SWSS_LOG_ENTER();
+
+    if (m_key2oid.find(data) == m_key2oid.end())
+    {
+        SWSS_LOG_ERROR("OcmOrch: get-ocm-raw: unknown OCM object '%s'", data.c_str());
+        return SAI_STATUS_ITEM_NOT_FOUND;
+    }
+
+    sai_object_id_t oid = m_key2oid[data];
+
+    std::vector<sai_int8_t> rawBuf(OTN_OCM_RAW_DATA_BUF_SIZE);
+
+    sai_attribute_t attr;
+    attr.id                 = SAI_OTN_OCM_ATTR_RAW_DATA;
+    attr.value.s8list.count = OTN_OCM_RAW_DATA_BUF_SIZE;
+    attr.value.s8list.list  = rawBuf.data();
+
+    sai_status_t status = m_getFunc(oid, 1, &attr);
+    if (status != SAI_STATUS_SUCCESS)
+    {
+        SWSS_LOG_ERROR("OcmOrch: get-ocm-raw failed for '%s', status=%d", data.c_str(), status);
+        return status;
+    }
+
+    uint32_t actualCount = attr.value.s8list.count;
+    SWSS_LOG_NOTICE("OcmOrch: get-ocm-raw '%s' returned %u samples", data.c_str(), actualCount);
+
+    std::string csv;
+    csv.reserve(actualCount * 7);
+    for (uint32_t i = 0; i < actualCount; i++)
+    {
+        if (i > 0) csv += ',';
+        csv += std::to_string(rawBuf[i]);
+    }
+
+    values.clear();
+    values.emplace_back("count", std::to_string(actualCount));
+    values.emplace_back("data",  csv);
+
+    return SAI_STATUS_SUCCESS;
+}
+
+bool OcmOrch::handleRpcRequest(
+    const std::string &op,
+    const std::string &data,
+    const std::vector<swss::FieldValueTuple> &inputs,
+    std::vector<swss::FieldValueTuple> &reply)
+{
+    if (op == "get-ocm-raw")
+    {
+        return doGetOcmRaw(data, reply) == SAI_STATUS_SUCCESS;
+    }
+
+    return false;
 }
 
 void OcmChannelOrch::addExtraAttrsOnCreate(const std::string &key, std::vector<sai_attribute_t> &attrs)

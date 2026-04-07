@@ -79,6 +79,11 @@ public:
 
     virtual void doTask(NotificationConsumer &consumer);
 
+    virtual bool handleRpcRequest(const std::string &op,
+                                  const std::string &data,
+                                  const std::vector<swss::FieldValueTuple> &inputs,
+                                  std::vector<swss::FieldValueTuple> &reply);
+
     void doStateTask(Consumer &consumer);
 
     bool createObject(const std::string &key);
