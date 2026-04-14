@@ -18,7 +18,6 @@
 
 
 extern sai_object_id_t gSwitchId;
-extern FlexManagerDirectory g_FlexManagerDirectory;
 
 void ObjectOrch::localDataInit(DBConnector *db)
 {
@@ -702,6 +701,11 @@ void ObjectOrch::doTask(Consumer &consumer)
             it = consumer.m_toSync.erase(it);
         }
     }
+
+    if (m_flex_stat_manager != nullptr)
+    {
+        m_flex_stat_manager->flush();
+    }
 }
 
 bool ObjectOrch::bulkSetObjects(const std::vector<ObjectAttrUpdate> &updates)
@@ -909,7 +913,7 @@ bool ObjectOrch::createFlexCounter(
         }
     }
 
-    m_flex_stat_manager = g_FlexManagerDirectory.createFlexCounterManager(
+    m_flex_stat_manager = new FlexCounterTaggedCachedManager<void>(
             group_name, stats_mode, polling_interval, enabled, fv_stat);
 
     return m_flex_stat_manager != nullptr;

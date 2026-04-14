@@ -185,5 +185,5 @@ protected:
 
     NotificationProducer *m_notificationProducer;
 
-    FlexCounterManager *m_flex_stat_manager;
+    FlexCounterTaggedCachedManager<void> *m_flex_stat_manager;
 };
