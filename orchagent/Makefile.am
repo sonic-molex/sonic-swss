@@ -6,7 +6,8 @@ INCLUDES = -I $(top_srcdir)/lib \
            -I debug_counter \
            -I port \
            -I pbh \
-           -I nhg
+           -I nhg \
+           -I ocs
 
 SUBDIRS = p4orch/tests
 
@@ -140,7 +141,13 @@ orchagent_SOURCES = \
             high_frequency_telemetry/hftelprofile.cpp \
             high_frequency_telemetry/counternameupdater.cpp \
             high_frequency_telemetry/hftelutils.cpp \
-            high_frequency_telemetry/hftelgroup.cpp
+            high_frequency_telemetry/hftelgroup.cpp \
+            ocs/orchfsm.cpp \
+            ocs/ocshelper.cpp \
+            ocs/objectorch.cpp \
+            ocs/ocscrossconnectorch.cpp \
+            ocs/ocsportorch.cpp \
+            ocs/ocsorchdaemon.cpp
 
 orchagent_SOURCES += flex_counter/flex_counter_manager.cpp flex_counter/flex_counter_stat_manager.cpp flex_counter/flow_counter_handler.cpp flex_counter/flowcounterrouteorch.cpp
 orchagent_SOURCES += debug_counter/debug_counter.cpp debug_counter/drop_counter.cpp

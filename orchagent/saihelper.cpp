@@ -420,7 +420,7 @@ void initSaiRedis()
     }
 
     char *platform = getenv("platform");
-    if (platform && (strstr(platform, MLNX_PLATFORM_SUBSTRING) || strstr(platform, XS_PLATFORM_SUBSTRING) || strstr(platform, MRVL_PRST_PLATFORM_SUBSTRING)))
+    if (platform && (strstr(platform, MLNX_PLATFORM_SUBSTRING) || strstr(platform, XS_PLATFORM_SUBSTRING) || strstr(platform, MRVL_PRST_PLATFORM_SUBSTRING) || strstr(platform, OCS_PLATFORM_SUBSTRING)))
     {
         /* We set this long timeout in order for Orchagent to wait enough time for
          * response from syncd. It is needed since in init, systemd syncd startup
@@ -450,7 +450,7 @@ void initSaiRedis()
     }
     SWSS_LOG_NOTICE("Notify syncd INIT_VIEW");
 
-    if (platform && (strstr(platform, MLNX_PLATFORM_SUBSTRING) || strstr(platform, XS_PLATFORM_SUBSTRING)))
+    if (platform && (strstr(platform, MLNX_PLATFORM_SUBSTRING) || strstr(platform, XS_PLATFORM_SUBSTRING) || strstr(platform, OCS_PLATFORM_SUBSTRING)))
     {
         /* Set timeout back to the default value */
         attr.id = SAI_REDIS_SWITCH_ATTR_SYNC_OPERATION_RESPONSE_TIMEOUT;
@@ -1096,6 +1096,13 @@ std::vector<sai_stat_id_t> queryAvailableCounterStats(const sai_object_type_t ob
     if (!info)
     {
         SWSS_LOG_ERROR("Metadata info query failed, invalid object: %d", object_type);
+        return stat_list;
+    }
+
+    if (info->statenum == NULL)
+    {
+        SWSS_LOG_NOTICE("SAI object %s does not support statistics",
+            sai_serialize_object_type(object_type).c_str());
         return stat_list;
     }
 

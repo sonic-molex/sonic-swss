@@ -46,6 +46,9 @@ enum class CounterType
     SRV6,
     SWITCH,
     HA_SET,
+    OCS_PORT_STATS,
+    OCS_PORT_ATTRS,
+    OCS_CROSS_CONNECT_ATTRS
 };
 
 extern bool gTraditionalFlexCounter;

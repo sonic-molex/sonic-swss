@@ -47,6 +47,7 @@ const char state_db_key_delimiter  = '|';
 #define NPS_PLATFORM_SUBSTRING  "nephos"
 #define CISCO_8000_PLATFORM_SUBSTRING "cisco-8000"
 #define XS_PLATFORM_SUBSTRING   "xsight"
+#define OCS_PLATFORM_SUBSTRING "ocs"
 #define CLX_PLATFORM_SUBSTRING  "clounix"
 
 #define CONFIGDB_KEY_SEPARATOR "|"
@@ -376,6 +377,13 @@ protected:
     Executor *getExecutor(std::string executorName);
 
     ResponsePublisher m_publisher{"APPL_STATE_DB"};
+protected:
+    /**
+     * Add consumer with optional pop batch size (APPL_DB only).
+     * When popBatchSize <= 0, gBatchSize is used. When popBatchSize > 0, that value
+     * is used for ConsumerStateTable so one doTask can receive more entries (e.g. OCS bulk).
+     */
+    void addConsumer(swss::DBConnector *db, std::string tableName, int pri, int popBatchSize);
 private:
     void addConsumer(swss::DBConnector *db, std::string tableName, int pri = default_orch_pri);
 };

@@ -1137,13 +1137,19 @@ bool Orch::isItemIdsMapContinuous(unsigned long idsMap, sai_uint32_t maxId)
 
 void Orch::addConsumer(DBConnector *db, string tableName, int pri)
 {
+    addConsumer(db, tableName, pri, 0);
+}
+
+void Orch::addConsumer(DBConnector *db, string tableName, int pri, int popBatchSize)
+{
     if (db->getDbId() == CONFIG_DB || db->getDbId() == STATE_DB || db->getDbId() == CHASSIS_APP_DB)
     {
         addExecutor(new Consumer(new SubscriberStateTable(db, tableName, TableConsumable::DEFAULT_POP_BATCH_SIZE, pri), this, tableName));
     }
     else
     {
-        addExecutor(new Consumer(new ConsumerStateTable(db, tableName, gBatchSize, pri), this, tableName));
+        int batchSize = (popBatchSize > 0) ? popBatchSize : gBatchSize;
+        addExecutor(new Consumer(new ConsumerStateTable(db, tableName, batchSize, pri), this, tableName));
     }
 }
 

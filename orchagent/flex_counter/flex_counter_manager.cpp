@@ -56,6 +56,9 @@ const unordered_map<CounterType, string> FlexCounterManager::counter_id_field_lo
     { CounterType::SRV6,                SRV6_COUNTER_ID_LIST },
     { CounterType::SWITCH,              SWITCH_COUNTER_ID_LIST },
     { CounterType::HA_SET,              HA_SET_COUNTER_ID_LIST },
+    { CounterType::OCS_PORT_STATS,      OCS_PORT_COUNTER_STATS_LIST },
+    { CounterType::OCS_PORT_ATTRS,      OCS_PORT_COUNTER_ATTRS_LIST },
+    { CounterType::OCS_CROSS_CONNECT_ATTRS, OCS_CROSS_CONNECT_COUNTER_ATTRS_LIST }
 };
 
 FlexManagerDirectory g_FlexManagerDirectory;

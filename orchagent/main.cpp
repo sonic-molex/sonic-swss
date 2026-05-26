@@ -33,6 +33,8 @@ extern "C" {
 #include "warm_restart.h"
 #include "gearboxutils.h"
 #include "macsecpost.h"
+#include "ocshelper.h"
+#include "ocsorchdaemon.h"
 
 using namespace std;
 using namespace swss;
@@ -201,7 +203,7 @@ void getCfgSwitchType(DBConnector *cfgDb, string &switch_type, string &switch_su
         switch_type = "switch";
     }
 
-    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu")
+    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu" && switch_type != SWITCH_TYPE_OCS)
     {
         SWSS_LOG_ERROR("Invalid switch type %s configured", switch_type.c_str());
     	//If configured switch type is none of the supported, assume regular switch
@@ -529,6 +531,15 @@ int main(int argc, char **argv)
 
     SWSS_LOG_NOTICE("--- Starting Orchestration Agent ---");
 
+    // Instantiate database connectors
+    DBConnector appl_db("APPL_DB", 0);
+    DBConnector config_db("CONFIG_DB", 0);
+    DBConnector state_db("STATE_DB", 0);
+
+    // Get switch_type (must be before SAI init to branch on OCS)
+    getCfgSwitchType(&config_db, gMySwitchType, gMySwitchSubType);
+    SWSS_LOG_NOTICE("Switch type: %s", gMySwitchType.c_str());
+
     /* Initialize sairedis recording parameters */
     Recorder::Instance().sairedis.setRecord(
         (record_type & SAIREDIS_RECORD_ENABLE) == SAIREDIS_RECORD_ENABLE
@@ -537,7 +548,12 @@ int main(int argc, char **argv)
     Recorder::Instance().sairedis.setFileName(sairedis_rec_filename);
 
     /* Initialize sairedis */
-    initSaiApi();
+    if (gMySwitchType == SWITCH_TYPE_OCS) {
+        SWSS_LOG_NOTICE("OCS platform detected, initializing OCS API");
+        initOcsApi();
+    } else {
+        initSaiApi();
+    }
     initSaiRedis();
     initFlexCounterTables();
 
@@ -564,11 +580,6 @@ int main(int argc, char **argv)
     Recorder::Instance().retry.setFileName(retry_rec_filename);
     Recorder::Instance().retry.startRec(true);
 
-    // Instantiate database connectors
-    DBConnector appl_db("APPL_DB", 0);
-    DBConnector config_db("CONFIG_DB", 0);
-    DBConnector state_db("STATE_DB", 0);
-
     // Instantiate ZMQ server
     shared_ptr<ZmqServer> zmq_server = nullptr;
     if (zmq_server_address.empty())
@@ -580,9 +591,6 @@ int main(int argc, char **argv)
         SWSS_LOG_NOTICE("The ZMQ channel on the northbound side of orchagent has been initialized: %s, %s", zmq_server_address.c_str(), vrf.c_str());
         zmq_server = create_zmq_server(zmq_server_address);
     }
-
-    // Get switch_type
-    getCfgSwitchType(&config_db, gMySwitchType, gMySwitchSubType);
 
     sai_attribute_t attr;
     vector<sai_attribute_t> attrs;
@@ -920,7 +928,10 @@ int main(int argc, char **argv)
         dpu_app_state_db = make_shared<DBConnector>("DPU_APPL_STATE_DB", 0, true);
         orchDaemon = make_shared<DpuOrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), dpu_app_db.get(), dpu_app_state_db.get(), zmq_server.get());
     }
-
+    else if (gMySwitchType == SWITCH_TYPE_OCS)
+    {
+        orchDaemon = make_shared<OcsOrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), zmq_server.get());
+    }
     else if (gMySwitchType != "fabric")
     {
         orchDaemon = make_shared<OrchDaemon>(&appl_db, &config_db, &state_db, chassis_db, zmq_server.get());
