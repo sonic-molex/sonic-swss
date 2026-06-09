@@ -50,6 +50,9 @@ enum class CounterType
     ICMP_ECHO_SESSION,
     OTN_ATTENUATOR_ATTR,
     OTN_OA_ATTR,
+    OTN_OCM_ATTR,
+    OTN_OCM_CHANNEL_ATTR,
+    OTN_OSC_ATTR,
 };
 
 extern bool gTraditionalFlexCounter;

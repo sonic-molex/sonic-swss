@@ -175,7 +175,9 @@ orchagent_SOURCES += p4orch/p4orch.cpp \
 orchagent_SOURCES += otn/otnorchdaemon.cpp \
             otn/objectorch.cpp \
             otn/attenuatororch.cpp \
-            otn/oaorch.cpp
+            otn/oaorch.cpp \
+            otn/ocmorch.cpp \
+            otn/oscorch.cpp
 
 orchagent_CFLAGS = $(DBGFLAGS) $(AM_CFLAGS) $(CFLAGS_COMMON) $(CFLAGS_SAI) $(CFLAGS_ASAN)
 orchagent_CPPFLAGS = $(DBGFLAGS) $(AM_CFLAGS) $(CFLAGS_COMMON) $(CFLAGS_SAI) $(CFLAGS_ASAN)

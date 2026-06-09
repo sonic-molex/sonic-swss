@@ -22,6 +22,9 @@ int main(int argc, char **argv)
         {
             { CFG_OTN_ATTENUATOR_TABLE_NAME, APP_OTN_ATTENUATOR_TABLE_NAME },
             { CFG_OTN_OA_TABLE_NAME, APP_OTN_OA_TABLE_NAME },
+            { CFG_OTN_OCM_TABLE_NAME, APP_OTN_OCM_TABLE_NAME },
+            { CFG_OTN_OCM_CHANNEL_TABLE_NAME, APP_OTN_OCM_CHANNEL_TABLE_NAME },
+            { CFG_OTN_OSC_TABLE_NAME, APP_OTN_OSC_TABLE_NAME },
         };
 
         vector<string> cfg_tables;
