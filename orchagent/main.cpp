@@ -34,6 +34,8 @@ extern "C" {
 #include "gearboxutils.h"
 #include "macsecpost.h"
 
+#include "otnorchdaemon.h"
+
 using namespace std;
 using namespace swss;
 
@@ -255,7 +257,7 @@ void getCfgSwitchType(DBConnector *cfgDb, string &switch_type, string &switch_su
         switch_type = "switch";
     }
 
-    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu")
+    if (switch_type != "voq" && switch_type != "fabric" && switch_type != "chassis-packet" && switch_type != "switch" && switch_type != "dpu" && switch_type != "otn")
     {
         SWSS_LOG_ERROR("Invalid switch type %s configured", switch_type.c_str());
     	//If configured switch type is none of the supported, assume regular switch
@@ -995,7 +997,10 @@ int main(int argc, char **argv)
         dpu_app_state_db = make_shared<DBConnector>("DPU_APPL_STATE_DB", 0, true);
         orchDaemon = make_shared<DpuOrchDaemon>(&appl_db, &config_db, &state_db, chassis_app_db.get(), dpu_app_db.get(), dpu_app_state_db.get(), zmq_server.get());
     }
-
+    else if (gMySwitchType == "otn")
+    {
+        orchDaemon = make_shared<OtnOrchDaemon>(&appl_db, &config_db, &state_db, chassis_db, zmq_server.get());
+    }
     else if (gMySwitchType != "fabric")
     {
         orchDaemon = make_shared<OrchDaemon>(&appl_db, &config_db, &state_db, chassis_db, zmq_server.get());

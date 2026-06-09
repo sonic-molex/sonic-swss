@@ -105,6 +105,8 @@ sai_dash_meter_api_t*               sai_dash_meter_api;
 sai_dash_outbound_port_map_api_t*   sai_dash_outbound_port_map_api;
 sai_dash_trusted_vni_api_t*         sai_dash_trusted_vni_api;
 sai_dash_flow_api_t*                sai_dash_flow_api;
+sai_otn_attenuator_api_t*           sai_otn_attenuator_api;
+sai_otn_oa_api_t*                   sai_otn_oa_api;
 
 extern sai_object_id_t gSwitchId;
 extern bool gTraditionalFlexCounter;
@@ -330,6 +332,8 @@ void initSaiApi()
     sai_api_query(SAI_API_TWAMP,                (void **)&sai_twamp_api);
     sai_api_query(SAI_API_TAM,                  (void **)&sai_tam_api);
     sai_api_query(SAI_API_STP,                  (void **)&sai_stp_api);
+    sai_api_query((sai_api_t)SAI_API_OTN_ATTENUATOR,            (void **)&sai_otn_attenuator_api);
+    sai_api_query((sai_api_t)SAI_API_OTN_OA,                    (void **)&sai_otn_oa_api);
 
     sai_log_set(SAI_API_SWITCH,                 SAI_LOG_LEVEL_NOTICE);
     sai_log_set(SAI_API_BRIDGE,                 SAI_LOG_LEVEL_NOTICE);

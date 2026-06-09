@@ -46,6 +46,8 @@ enum class CounterType
     SRV6,
     SWITCH,
     HA_SET,
+    OTN_ATTENUATOR_ATTR,
+    OTN_OA_ATTR,
 };
 
 extern bool gTraditionalFlexCounter;
