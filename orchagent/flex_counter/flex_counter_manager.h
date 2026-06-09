@@ -48,6 +48,8 @@ enum class CounterType
     HA_SET,
     OFFLOAD_SESSION,
     ICMP_ECHO_SESSION,
+    OTN_ATTENUATOR_ATTR,
+    OTN_OA_ATTR,
 };
 
 extern bool gTraditionalFlexCounter;

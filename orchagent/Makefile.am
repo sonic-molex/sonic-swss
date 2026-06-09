@@ -6,7 +6,8 @@ INCLUDES = -I $(top_srcdir)/lib \
            -I debug_counter \
            -I port \
            -I pbh \
-           -I nhg
+           -I nhg \
+           -I otn
 
 SUBDIRS = p4orch/tests
 
@@ -170,6 +171,11 @@ orchagent_SOURCES += p4orch/p4orch.cpp \
 		     p4orch/l3_multicast_manager.cpp \
 		     p4orch/ip_multicast_manager.cpp \
  		     p4orch/ext_tables_manager.cpp
+
+orchagent_SOURCES += otn/otnorchdaemon.cpp \
+            otn/objectorch.cpp \
+            otn/attenuatororch.cpp \
+            otn/oaorch.cpp
 
 orchagent_CFLAGS = $(DBGFLAGS) $(AM_CFLAGS) $(CFLAGS_COMMON) $(CFLAGS_SAI) $(CFLAGS_ASAN)
 orchagent_CPPFLAGS = $(DBGFLAGS) $(AM_CFLAGS) $(CFLAGS_COMMON) $(CFLAGS_SAI) $(CFLAGS_ASAN)

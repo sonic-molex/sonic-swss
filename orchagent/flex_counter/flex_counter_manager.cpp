@@ -58,6 +58,8 @@ const unordered_map<CounterType, string> FlexCounterManager::counter_id_field_lo
     { CounterType::HA_SET,              HA_SET_COUNTER_ID_LIST },
     { CounterType::OFFLOAD_SESSION,     FLOW_COUNTER_ID_LIST },
     { CounterType::ICMP_ECHO_SESSION,   ICMP_ECHO_SESSION_COUNTER_ID_LIST },
+    { CounterType::OTN_ATTENUATOR_ATTR, OTN_ATTENUATOR_ATTR_ID_LIST },
+    { CounterType::OTN_OA_ATTR,         OTN_OA_ATTR_ID_LIST },
 };
 
 FlexManagerDirectory g_FlexManagerDirectory;
