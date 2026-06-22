@@ -5,26 +5,25 @@
 #include "producerstatetable.h"
 
 #include <map>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace swss {
 
 class OtnMgr : public Orch
 {
 public:
-    OtnMgr(DBConnector *cfgDb, DBConnector *appDb, DBConnector *stateDb, const std::vector<std::string> &tableNames, const std::map<std::string, std::string> &tableMaps);
+    OtnMgr(DBConnector *cfgDb, DBConnector *appDb, const std::vector<std::string> &tableNames, const std::map<std::string, std::string> &tableMaps);
 
     using Orch::doTask;
 private:
     DBConnector *m_appl_db;
-    DBConnector *m_state_db;
-    const std::map<std::string, std::string> &m_tableMaps;
+    std::map<std::string, std::string> m_tableMaps;
     std::map<std::string, std::shared_ptr<ProducerStateTable>> m_appTables;
 
     void doTask(Consumer &consumer);
-    bool writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::string &field, const std::string &value);
-    bool writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, std::vector<FieldValueTuple> &field_values);
+    void writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::vector<FieldValueTuple> &field_values);
 };
 
 }

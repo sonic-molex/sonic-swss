@@ -1,9 +1,10 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <map>
+#include <memory>
+#include <string>
 #include <tuple>
+#include <vector>
 #include "orch.h"
 #include "saihelper.h"
 #include "notifier.h"
@@ -69,8 +70,8 @@ public:
     virtual void addExtraAttrsOnCreate(const std::string &key, std::vector<sai_attribute_t> &attrs) {};
 
     bool setObjectAttrs(const std::string &key,
-                            std::map<std::string, std::string> &field_values,
-                            std::string operation_id="");
+                        std::map<std::string, std::string> &field_values,
+                        std::string operation_id="");
 
     sai_status_t setObjectAttr(sai_object_id_t oid, const std::string &field, const std::string &value);
 
@@ -82,13 +83,13 @@ public:
 
     virtual void doSubobjectStateTask(const std::string &key, const std::string &present){};
 
-    void publishOperationResult(std::string operation_id, int status_code, std::string message);
+    void publishOperationResult(const std::string &channel, sai_status_t status_code, const std::string &message);
 
     bool translateObjectAttr(_In_ const std::string &field,
-                                 _In_ const std::string &value,
-                                 _Out_ sai_attribute_t &attr);
+                             _In_ const std::string &value,
+                             _Out_ sai_attribute_t &attr) const;
 
-    bool createFlexCounter(_In_ const std::string &script_path,
+    void createFlexCounter(_In_ const std::string &script_path,
                            _In_ const std::string &plugin_field,
                            _In_ const std::string &group_name,
                            _In_ const StatsMode stats_mode,
@@ -162,5 +163,5 @@ protected:
 
     NotificationProducer *m_notificationProducer;
 
-    FlexCounterTaggedCachedManager<void> *m_flex_stat_manager;
+    std::unique_ptr<FlexCounterTaggedCachedManager<void>> m_flex_stat_manager;
 };

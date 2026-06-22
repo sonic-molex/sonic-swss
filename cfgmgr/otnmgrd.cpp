@@ -1,10 +1,5 @@
-#include <fstream>
-#include <iostream>
-#include <mutex>
-#include <unistd.h>
 #include <vector>
 
-#include "exec.h"
 #include "otnmgr.h"
 #include "schema.h"
 #include "select.h"
@@ -12,15 +7,14 @@
 using namespace std;
 using namespace swss;
 
-/* select() function timeout retry time, in millisecond */
 #define SELECT_TIMEOUT 1000
 
 int main(int argc, char **argv)
 {
-    Logger::linkToDbNative("OtnMgrd");
+    Logger::linkToDbNative("otnmgrd");
     SWSS_LOG_ENTER();
 
-    SWSS_LOG_NOTICE("--- Starting OtnMgrd ---");
+    SWSS_LOG_NOTICE("--- Starting otnmgrd ---");
 
     try
     {
@@ -31,18 +25,16 @@ int main(int argc, char **argv)
         };
 
         vector<string> cfg_tables;
-        for (auto const &it : cfg_maps)
+        for (const auto &it : cfg_maps)
         {
             cfg_tables.push_back(it.first);
         }
 
         DBConnector cfgDb("CONFIG_DB", 0);
         DBConnector appDb("APPL_DB", 0);
-        DBConnector stateDb("STATE_DB", 0);
 
-        OtnMgr otnMgr(&cfgDb, &appDb, &stateDb, cfg_tables, cfg_maps);
+        OtnMgr otnMgr(&cfgDb, &appDb, cfg_tables, cfg_maps);
 
-        // TODO: add tables in stateDB which interface depends on to monitor list
         vector<Orch *> cfgOrchList = { &otnMgr };
 
         swss::Select s;
@@ -68,7 +60,7 @@ int main(int argc, char **argv)
                 continue;
             }
 
-            auto *c = (Executor *)sel;
+            auto *c = static_cast<Executor *>(sel);
             c->execute();
         }
     }
@@ -76,5 +68,5 @@ int main(int argc, char **argv)
     {
         SWSS_LOG_ERROR("Runtime error: %s", e.what());
     }
-    return -1;
+    return EXIT_FAILURE;
 }

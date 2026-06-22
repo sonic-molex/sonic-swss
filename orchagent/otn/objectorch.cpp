@@ -1,19 +1,9 @@
 #include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <string>
 #include <inttypes.h>
-#include <stdexcept>
-#include <sys/time.h>
-#include "timestamp.h"
+
 #include "objectorch.h"
+#include "otnutil.h"
 #include "sai_serialize.h"
-#include "flexcounterorch.h"
-#include "converter.h"
-#include "subscriberstatetable.h"
-#include "tokenize.h"
-#include "logger.h"
-#include "consumerstatetable.h"
 #include "redisapi.h"
 
 
@@ -31,8 +21,8 @@ void ObjectOrch::localDataInit(DBConnector *db)
     }
 
     m_objectName = objectName;
-    m_stateDb = std::shared_ptr<DBConnector>(new DBConnector("STATE_DB", 0));
-    m_countersDb = std::shared_ptr<DBConnector>(new DBConnector("COUNTERS_DB", 0));
+    m_stateDb = std::make_shared<DBConnector>("STATE_DB", 0);
+    m_countersDb = std::make_shared<DBConnector>("COUNTERS_DB", 0);
     m_vid2NameTable = std::unique_ptr<Table>(new Table(m_countersDb.get(), "VID2NAME"));
 
     SWSS_LOG_NOTICE("ObjectOrch init, object type=%u, object name=%s", m_objectType, objectName);
@@ -64,7 +54,7 @@ void ObjectOrch::localDataInit(DBConnector *db)
         sai_attr_id_t id = oi->enummetadata->values[index];
         const sai_attr_metadata_t *const attr = oi->attrmetadata[index];
 
-        SWSS_LOG_DEBUG("localDataInit, enum index=%ld, attr valueprecision: %ld", index, attr->valueprecision);
+        SWSS_LOG_DEBUG("localDataInit, enum index=%zu, attr valueprecision: %zu", index, attr->valueprecision);
         // Save precision value for each attribuite if precision is valid.
         if (attr->valueprecision > 0) {
             m_attrPrecisions[name] = attr->valueprecision;
@@ -115,12 +105,12 @@ void ObjectOrch::localDataInit(DBConnector *db)
     }
 
     /* Set create and set, create only attributes to state cache list */
-    for (auto it : m_createandsetAttrs)
+    for (const auto &it : m_createandsetAttrs)
     {
         m_needToCache.insert(it.first);
     }
 
-    for (auto it : m_createonlyAttrs)
+    for (const auto &it : m_createonlyAttrs)
     {
         m_needToCache.insert(it.first);
     }
@@ -136,8 +126,7 @@ ObjectOrch::ObjectOrch(DBConnector *db,
     m_objectType(obj_type),
     m_flex_counter_type(flex_counter_type),
     m_notificationConsumer(nullptr),
-    m_notificationProducer(nullptr),
-    m_flex_stat_manager(nullptr)
+    m_notificationProducer(nullptr)
 {
     SWSS_LOG_ENTER();
 
@@ -152,8 +141,7 @@ ObjectOrch::ObjectOrch(DBConnector *db,
     m_objectType(obj_type),
     m_flex_counter_type(flex_counter_type),
     m_notificationConsumer(nullptr),
-    m_notificationProducer(nullptr),
-    m_flex_stat_manager(nullptr)
+    m_notificationProducer(nullptr)
 {
     SWSS_LOG_ENTER();
 
@@ -219,11 +207,11 @@ void ObjectOrch::doTask(NotificationConsumer& consumer)
                     field.c_str(), status);
                 goto error;
             }
-         }
-         op = "SUCCESS";
-         m_notificationProducer->send(op, data, values);
+        }
+        op = "SUCCESS";
+        m_notificationProducer->send(op, data, values);
 
-         return;
+        return;
     }
 
 error:
@@ -239,7 +227,7 @@ bool ObjectOrch::createObject(const std::string &key)
 
     std::vector<sai_attribute_t> attrs;
     std::map<std::string, std::string> &createonly_attrs = m_key2createonlyAttrs[key];
-    for (auto fv: createonly_attrs)
+    for (const auto &fv : createonly_attrs)
     {
         sai_attribute_t attr;
         if (translateObjectAttr(fv.first, fv.second, attr) == false)
@@ -330,7 +318,7 @@ bool ObjectOrch::removeObject(const std::string &key)
     return true;
 }
 
-void ObjectOrch::publishOperationResult(std::string channel, sai_status_t status_code, std::string message)
+void ObjectOrch::publishOperationResult(const std::string &channel, sai_status_t status_code, const std::string &message)
 {
     swss::NotificationProducer notifications(m_stateDb.get(), channel);
     std::vector<swss::FieldValueTuple> entry;
@@ -354,7 +342,7 @@ bool ObjectOrch::setObjectAttrs(const std::string& key, std::map<std::string, st
     std::string error_msg;
     sai_status_t status = SAI_STATUS_SUCCESS;
 
-    for (auto fv : field_values)
+    for (const auto &fv : field_values)
     {
         std::string channel = fv.first + "-" + operation_id;
 
@@ -395,15 +383,15 @@ bool ObjectOrch::setObjectAttrs(const std::string& key, std::map<std::string, st
 bool ObjectOrch::translateObjectAttr(
     _In_ const std::string &field,
     _In_ const std::string &value,
-    _Out_ sai_attribute_t &attr)
+    _Out_ sai_attribute_t &attr) const
 {
     if (m_createandsetAttrs.find(field) != m_createandsetAttrs.end())
     {
-        attr.id = m_createandsetAttrs[field];
+        attr.id = m_createandsetAttrs.at(field);
     }
     else if (m_createonlyAttrs.find(field) != m_createonlyAttrs.end())
     {
-        attr.id = m_createonlyAttrs[field];
+        attr.id = m_createonlyAttrs.at(field);
     }
     else
     {
@@ -421,25 +409,17 @@ bool ObjectOrch::translateObjectAttr(
     std::string newValue(value);
     if (m_enumValues.find(value) != m_enumValues.end())
     {
-        newValue = m_enumValues[value];
+        newValue = m_enumValues.at(value);
     }
     else if (m_attrPrecisions.find(field) != m_attrPrecisions.end())
     {
-        /* Convert float string to int string according to the precision */
         try
         {
-            double float_value = std::stod(value);
-            size_t precision = m_attrPrecisions[field];
-            int64_t int_value = static_cast<int64_t>(float_value * (std::pow(10, precision)));
-            newValue = std::to_string(int_value);
+            newValue = otn::precisionEncode(value, m_attrPrecisions.at(field));
         }
-        catch (const std::invalid_argument &e) {
-            SWSS_LOG_ERROR("Invalid float value, %s|%s|%s",
-                           m_objectName.c_str(), field.c_str(), value.c_str());
-            return false;
-        }
-        catch (const std::out_of_range &e) {
-            SWSS_LOG_ERROR("Out of range float value, %s|%s|%s",
+        catch (...)
+        {
+            SWSS_LOG_ERROR("Failed to encode precision value, %s|%s|%s",
                            m_objectName.c_str(), field.c_str(), value.c_str());
             return false;
         }
@@ -453,7 +433,7 @@ bool ObjectOrch::translateObjectAttr(
     }
     catch (...)
     {
-        SWSS_LOG_ERROR("Unrecongnized attr value, %s|%s|%s",
+        SWSS_LOG_ERROR("Unrecognized attr value, %s|%s|%s",
                        m_objectName.c_str(), field.c_str(), newValue.c_str());
         return false;
     }
@@ -519,14 +499,20 @@ sai_status_t ObjectOrch::getObjectAttr(sai_object_id_t oid, const std::string &f
     try
     {
         value = sai_serialize_attr_value(*meta, attr, false);
+
+        if (m_attrPrecisions.find(field) != m_attrPrecisions.end())
+        {
+            value = otn::precisionDecode(value, m_attrPrecisions[field]);
+        }
     }
     catch (...)
     {
-        SWSS_LOG_ERROR("Failed to serialize attr value, %s|%s|%s",
+        SWSS_LOG_ERROR("Failed to get attr value, %s|%s|%s",
                        m_objectName.c_str(), field.c_str(), value.c_str());
         return SAI_STATUS_FAILURE;
     }
-    SWSS_LOG_NOTICE("Get %s attr successed, pid:%" PRIx64 " field=%s, value=%s",
+
+    SWSS_LOG_NOTICE("Get %s attr succeeded, pid:%" PRIx64 " field=%s, value=%s",
                     m_objectName.c_str(), oid, field.c_str(), value.c_str());
 
     return SAI_STATUS_SUCCESS;
@@ -559,9 +545,9 @@ void ObjectOrch::doTask(Consumer &consumer)
             std::map<std::string, std::string> createonly_attrs;
             std::map<std::string, std::string> createandset_attrs;
 
-            for (auto i : kfvFieldsValues(t))
+            for (const auto &i : kfvFieldsValues(t))
             {
-                auto name = fvField(i);
+                const auto &name = fvField(i);
                 if (m_createonlyAttrs.find(name) != m_createonlyAttrs.end())
                 {
                     createonly_attrs[name] = fvValue(i);
@@ -650,7 +636,7 @@ void ObjectOrch::doStateTask(Consumer &consumer)
             continue;
         }
 
-        for (auto i : kfvFieldsValues(t))
+        for (const auto &i : kfvFieldsValues(t))
         {
             if (fvField(i) == "present")
             {
@@ -678,12 +664,12 @@ void ObjectOrch::doStateTask(Consumer &consumer)
         {
             if (present_value == "PRESENT")
             {
-                SWSS_LOG_NOTICE("setCounterIdList 0x%lx, key = %s", id, key.c_str());
+                SWSS_LOG_NOTICE("setCounterIdList 0x%" PRIx64 ", key = %s", id, key.c_str());
                 setFlexCounter(id);
             }
             else if (present_value == "NOT_PRESENT")
             {
-                SWSS_LOG_NOTICE("clearCounterIdList 0x%lx, key = %s", id, key.c_str());
+                SWSS_LOG_NOTICE("clearCounterIdList 0x%" PRIx64 ", key = %s", id, key.c_str());
                 clearFlexCounter(id);
             }
 
@@ -695,7 +681,7 @@ void ObjectOrch::doStateTask(Consumer &consumer)
     }
 }
 
-bool ObjectOrch::createFlexCounter(
+void ObjectOrch::createFlexCounter(
     _In_ const std::string& script_path,
     _In_ const std::string& plugin_field,
     _In_ const std::string& group_name,
@@ -724,10 +710,8 @@ bool ObjectOrch::createFlexCounter(
         }
     }
 
-    m_flex_stat_manager = new FlexCounterTaggedCachedManager<void>(
+    m_flex_stat_manager = std::make_unique<FlexCounterTaggedCachedManager<void>>(
             group_name, stats_mode, polling_interval, enabled, fv_stat);
-
-    return m_flex_stat_manager != nullptr;
 }
 
 void ObjectOrch::setFlexCounter(sai_object_id_t id)

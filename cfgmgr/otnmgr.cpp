@@ -1,19 +1,11 @@
-#include "logger.h"
-#include "dbconnector.h"
-#include "tokenize.h"
-#include "ipprefix.h"
 #include "otnmgr.h"
-#include "exec.h"
-#include "shellcmd.h"
-#include <swss/redisutility.h>
 
 using namespace std;
 using namespace swss;
 
-OtnMgr::OtnMgr(DBConnector *cfgDb, DBConnector *appDb, DBConnector *stateDb, const std::vector<std::string> &tableNames, const std::map<std::string, std::string> &tableMaps) :
+OtnMgr::OtnMgr(DBConnector *cfgDb, DBConnector *appDb, const std::vector<std::string> &tableNames, const std::map<std::string, std::string> &tableMaps) :
         Orch(cfgDb, tableNames),
         m_appl_db(appDb),
-        m_state_db(stateDb),
         m_tableMaps(tableMaps)
 {
 }
@@ -47,7 +39,7 @@ void OtnMgr::doTask(Consumer &consumer)
     auto it = consumer.m_toSync.begin();
     while (it != consumer.m_toSync.end())
     {
-        KeyOpFieldsValuesTuple t = it->second;
+        auto &t = it->second;
         string alias = kfvKey(t);
         string op = kfvOp(t);
 
@@ -56,11 +48,11 @@ void OtnMgr::doTask(Consumer &consumer)
         if (op == SET_COMMAND)
         {
             auto values = kfvFieldsValues(t);
-            for (auto value : values)
+            for (const auto &value : values)
             {
                 SWSS_LOG_NOTICE("OtnMgr doTask, key=%s, value=%s", value.first.c_str(), value.second.c_str());
             }
-            if (values.size())
+            if (!values.empty())
             {
                 writeConfigToAppDb(appTable, alias, values);
             }
@@ -75,22 +67,9 @@ void OtnMgr::doTask(Consumer &consumer)
     }
 }
 
-bool OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::string &field, const std::string &value)
-{
-    SWSS_LOG_ENTER();
-
-    vector<FieldValueTuple> fvs;
-    FieldValueTuple fv(field, value);
-    fvs.push_back(fv);
-    table->set(alias, fvs);
-
-    return true;
-}
-
-bool OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, std::vector<FieldValueTuple> &field_values)
+void OtnMgr::writeConfigToAppDb(std::shared_ptr<ProducerStateTable> &table, const std::string &alias, const std::vector<FieldValueTuple> &field_values)
 {
     SWSS_LOG_ENTER();
 
     table->set(alias, field_values);
-    return true;
 }
