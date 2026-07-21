@@ -100,6 +100,7 @@ public:
     void copyConfigToState(const std::string &key, std::map<std::string, std::string> &fvs);
 
 protected:
+    void loadExtraFlexCounterAttrs();
 
     std::shared_ptr<DBConnector> m_stateDb;
 
@@ -162,6 +163,8 @@ protected:
     NotificationConsumer *m_notificationConsumer;
 
     NotificationProducer *m_notificationProducer;
+
+    std::vector<std::string> m_extraFlexCounterAttrs;
 
     std::unique_ptr<FlexCounterTaggedCachedManager<void>> m_flex_stat_manager;
 };

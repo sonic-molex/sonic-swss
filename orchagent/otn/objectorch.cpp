@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <fstream>
 #include <inttypes.h>
+
+#include <nlohmann/json.hpp>
 
 #include "objectorch.h"
 #include "otnutil.h"
@@ -8,6 +11,71 @@
 
 
 extern sai_object_id_t gSwitchId;
+
+void ObjectOrch::loadExtraFlexCounterAttrs()
+{
+    std::ifstream file("/usr/share/sonic/platform/flex_counter_extra_attrs.json");
+    if (!file.good())
+    {
+        return;
+    }
+
+    try
+    {
+        nlohmann::json j;
+        file >> j;
+
+        const char *shortName = sai_metadata_get_enum_value_short_name(
+            &sai_metadata_enum_sai_object_type_t, m_objectType);
+        if (shortName == nullptr)
+        {
+            SWSS_LOG_WARN("Unknown object type %d, skip loading extra FlexCounter attrs", m_objectType);
+            return;
+        }
+
+        std::string tableName(shortName);
+
+        if (!j.contains(tableName) || !j[tableName].is_array())
+        {
+            return;
+        }
+
+        for (const auto &attrName : j[tableName])
+        {
+            std::string name = attrName.get<std::string>();
+            sai_attr_id_t attr_id;
+
+            if (m_createandsetAttrs.count(name))
+            {
+                attr_id = m_createandsetAttrs[name];
+            }
+            else if (m_createonlyAttrs.count(name))
+            {
+                attr_id = m_createonlyAttrs[name];
+            }
+            else
+            {
+                SWSS_LOG_WARN("Unknown extra FlexCounter attr '%s' for %s, skipped",
+                              name.c_str(), tableName.c_str());
+                continue;
+            }
+
+            auto meta = sai_metadata_get_attr_metadata(m_objectType, attr_id);
+            if (meta == nullptr)
+            {
+                SWSS_LOG_WARN("Failed to get metadata for attr '%s', skipped", name.c_str());
+                continue;
+            }
+
+            m_extraFlexCounterAttrs.push_back(meta->attridname);
+            SWSS_LOG_NOTICE("Extra FlexCounter attr: %s -> %s", name.c_str(), meta->attridname);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        SWSS_LOG_WARN("Failed to parse flex_counter_extra_attrs.json: %s", e.what());
+    }
+}
 
 void ObjectOrch::localDataInit(DBConnector *db)
 {
@@ -114,6 +182,8 @@ void ObjectOrch::localDataInit(DBConnector *db)
     {
         m_needToCache.insert(it.first);
     }
+
+    loadExtraFlexCounterAttrs();
 
     SWSS_LOG_DEBUG("localDataInit, exit");
 }
@@ -728,6 +798,12 @@ void ObjectOrch::setFlexCounter(sai_object_id_t id)
     for (const auto& it : m_readonlyOrgAttrs) {
         counter_attrs.emplace(it.first);
     }
+
+    for (const auto& attrName : m_extraFlexCounterAttrs)
+    {
+        counter_attrs.emplace(attrName);
+    }
+
     m_flex_stat_manager->setCounterIdList(id, m_flex_counter_type, counter_attrs);
 }
 
