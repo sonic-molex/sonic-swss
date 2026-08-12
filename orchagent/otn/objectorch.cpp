@@ -545,12 +545,13 @@ sai_status_t ObjectOrch::getObjectAttr(sai_object_id_t oid, const std::string &f
     SWSS_LOG_ENTER();
 
     sai_attribute_t attr;
-    if (m_readonlyAttrs.find(field) == m_readonlyAttrs.end())
+    auto readonlyAttr = m_readonlyAttrs.find(field);
+    if (readonlyAttr == m_readonlyAttrs.end())
     {
         SWSS_LOG_ERROR("Unsupported attr, %s|%s", m_objectName.c_str(), field.c_str());
         return SAI_STATUS_FAILURE;
     }
-    attr.id = m_readonlyAttrs[field];
+    attr.id = readonlyAttr->second;
 
     sai_status_t status = m_getFunc(oid, 1, &attr);
     if (status != SAI_STATUS_SUCCESS)
@@ -570,9 +571,10 @@ sai_status_t ObjectOrch::getObjectAttr(sai_object_id_t oid, const std::string &f
     {
         value = sai_serialize_attr_value(*meta, attr, false);
 
-        if (m_attrPrecisions.find(field) != m_attrPrecisions.end())
+        auto precision = m_attrPrecisions.find(field);
+        if (precision != m_attrPrecisions.end())
         {
-            value = otn::precisionDecode(value, m_attrPrecisions[field]);
+            value = otn::precisionDecode(value, precision->second);
         }
     }
     catch (...)

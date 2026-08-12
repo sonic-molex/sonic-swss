@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -11,7 +12,7 @@ namespace otn {
 inline std::string precisionEncode(const std::string &value, size_t precision)
 {
     double fval = std::stod(value);
-    int64_t ival = static_cast<int64_t>(fval * std::pow(10, precision));
+    int64_t ival = std::llround(fval * std::pow(10, precision));
     return std::to_string(ival);
 }
 
